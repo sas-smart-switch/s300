@@ -1,0 +1,39 @@
+From 21bf480121f4c14739e0c3c1e5a223ca063189ff Mon Sep 17 00:00:00 2001
+From: Erik Andersson <erik@ingate.com>
+Date: Thu, 7 Apr 2016 15:21:01 -0500
+Subject: [PATCH] KLIPS: Fix for /proc/net/pf_key oops on < 4.4 kernels
+ introduced in 3.17
+
+Signed-off-by: Paul Wouters <pwouters@redhat.com>
+---
+ linux/include/libreswan/pfkey.h | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/linux/include/libreswan/pfkey.h b/linux/include/libreswan/pfkey.h
+index d965e5d..3f70e15 100644
+--- a/linux/include/libreswan/pfkey.h
++++ b/linux/include/libreswan/pfkey.h
+@@ -18,6 +18,7 @@
+ #define __NET_IPSEC_PF_KEY_H
+ 
+ #include "pfkeyv2.h"
++#include <linux/version.h>
+ #ifdef __KERNEL__
+ extern struct proto_ops pfkey_proto_ops;
+ typedef struct sock pfkey_sock;
+@@ -139,7 +140,11 @@ struct key_opt {
+ 	struct sock     *sk;
+ };
+ 
+-#define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
++# define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
++#else
++# define key_pid(sk) ((struct key_opt*)&((sk)->sk_protinfo))->key_pid
++#endif
+ 
+ /* XXX-mcr this is not an alignment, this is because the count is in 64-bit
+  * words.
+-- 
+2.8.2
+

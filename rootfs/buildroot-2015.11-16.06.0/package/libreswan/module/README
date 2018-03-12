@@ -1,0 +1,24 @@
+To build Libreswan kernel module (KLIPS) ipsec.ko, you need the following:
+1) kernel source directory: KERNEL_GIT
+2) OCF source directory: OCF_DIR
+3) buildroot directory: BR_DIR
+4) ipsec.ko default include and config files (reside in the buildroot/package/libreswan/module directory))
+
+Following are the configurations you need to set before building:
+
+KERNEL_GIT=
+OCF_DIR=
+BR_DIR=
+
+You must first build the linux kernel and the OCF kernel module before building the ipsec.ko.
+
+Following is the build command that builds the ipsec.ko
+make KBUILD_EXTRA_SYMBOLS=$OCF_DIR/Module.symvers \
+     MODULE_DEF_INCLUDE=$BR_DIR/package/libreswan/module/config-all.hmodules \
+     MODULE_DEFCONFIG=$BR_DIR/package/libreswan/module/defconfig \
+     KERNELSRC=$KERNEL_GIT \
+     module
+
+If the build passes w/o an error, the ipsec.ko module can be copied into your rootfs:
+sudo cp -v $LIBSWAN_DIR/modobj/ipsec.ko $TARGET_ROOTFS/lib/modules/
+

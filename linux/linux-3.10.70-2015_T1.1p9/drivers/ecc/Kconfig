@@ -1,0 +1,6 @@
+config ECC_ERROR_DETECTION
+	tristate “ECC_ERROR_DETECTION”
+	depends on ARM
+	default m
+	help
+	  ecc error detection

@@ -1,0 +1,173 @@
+/*
+ * Device Tree file for Marvell Armada 385 evaluation board
+ * (DB-88F6820)
+ *
+ *  Copyright (C) 2013 Marvell
+ *
+ * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+ *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
+ * modifed by Lijun Qin <lijun.qin@microsemi.com>
+ * This is customized for Galileo IOM based Marvell SOC 88F6810 
+ * Please review it carefully according to Galileo HW Spec
+ */
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include "armada-380.dtsi"
+
+/ {
+	model = "MicorSemi Galileo IOM Development Board";
+	compatible = "marvell,armada380", "marvell,armada38x";
+
+	chosen {
+		bootargs = "console=ttyS0,115200 earlyprintk";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x00000000 0x40000000>; /* MSCC uses 1GB DDR4  */
+	};
+
+	soc {
+
+		internal-regs {
+			ethernet@70000 {
+				status = "okay";
+				phy = <&phy0>;
+				phy-mode = "sgmii"; 
+			};
+
+			ethernet@30000 {
+				status = "okay";
+				phy = <&phy1>;
+				phy-mode = "sgmii";
+			};
+
+			i2c0: i2c@11000 {
+				status = "okay";
+				clock-frequency = <100000>;
+			};
+
+			i2c1: i2c@11100 {
+				status = "okay";
+				clock-frequency = <100000>;
+			};
+
+			mdio {
+				phy0: ethernet-phy@0 {
+					reg = <0>;
+				};
+
+				phy1: ethernet-phy@1 {
+					reg = <1>;
+				};
+			};
+
+			tdm@b0000 {
+				pinctrl-0 = <&tdm_pins>;
+				pinctrl-names = "default";
+				pclk-freq-mhz = <8>;
+			};
+
+			sdhci@d8000 {
+				broken-cd;
+				wp-inverted;
+				bus-width = <8>;
+				status = "okay";
+				no-1-8-v;
+			};
+
+			serial@12000 {
+				status = "okay";
+			};
+
+			serial@12100 {
+				status = "okay";
+			};
+			
+			spi0: spi@10600 {
+				spi-flash@0 {
+					#address-cells = <1>;  /* Galieo has only one SPI ROM 4M, totally for u-boot, kernel/rootfs is on USB */ 
+					#size-cells = <1>;    /* Plase validate spi0 and spi1 according to galileo HW Spec */
+					compatible = "n25q128a13";
+					reg = <0>; /* Chip select 0 */
+					spi-max-frequency = <108000000>;
+					mtd0@00000000 {
+						label = "U-Boot";
+						reg = <0x00000000 0x00400000>;
+						read-only;
+					};
+
+					mtd1@00400000 {
+						label = "Root";
+						reg = <0x00400000 0x00c00000>;
+					};
+				};
+			};
+
+			spi1: spi@10680 {
+				pinctrl-0 = <&spi1_pins>;
+				pinctrl-names = "default";
+
+				slic@0 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					compatible = "mv_slic";
+					reg = <0>; /* Chip select 0 */
+					spi-max-frequency = <3000000>;
+					spi-1byte-cs;
+					spi-cpol;
+					spi-cpha;
+				};
+				spi-flash@0 {
+					#address-cells = <1>;
+					#size-cells = <1>;
+					compatible = "n25q256a"; /* this flash is used for AMC board */
+					reg = <0>; /* Chip select 0 */
+					spi-max-frequency = <108000000>;
+					mtd0@00000000 {
+						label = "U-Boot";
+						reg = <0x00000000 0x00400000>;
+						read-only;
+					};
+
+					mtd1@00400000 {
+						label = "Root";
+						reg = <0x00400000 0x00c00000>;
+					};
+				};
+			};
+			
+			usb3@f8000 {
+				status = "okay"; /* USB 3.0 for kernel/rootfs */
+			};
+			usb@58000 {
+				status = "okay";  /* USB 2.0 for Exar */
+			};
+			audio-controller@e8000 {
+				pinctrl-0 = <&i2s_pins>;  /* not neededed ? */
+				pinctrl-names = "default";
+			};
+
+			crypto@9D000 {
+				status = "okay";
+			};
+		};
+
+		pcie-controller {
+			status = "okay"; /* We have a SAS HBA controller connected to this PCIe */
+		};
+	};
+
+
+	spdif_out: spdif-out {
+		compatible = "linux,spdif-dit";
+	};
+
+	spdif_in: spdif-in {
+		compatible = "linux,spdif-dir";
+	};
+};

@@ -1,0 +1,1 @@
+obj-$(CONFIG_ECC_ERROR_DETECTION) +=ecc.o
