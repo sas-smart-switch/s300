@@ -1,0 +1,124 @@
+From 597836c5057df21423a8e945a7d89ef934226c0b Mon Sep 17 00:00:00 2001
+From: Nadav Haklai <nadavh@marvell.com>
+Date: Wed, 13 May 2015 15:03:57 +0300
+Subject: [PATCH 1/1] marvell patch to openswan 2_6_37
+
+Change-Id: I90851c8524470cbad2ce29a87c07db25fe96dd7b
+Signed-off-by: Nadav Haklai <nadavh@marvell.com>
+---
+ Makefile.inc                    |  4 ++--
+ linux/net/ipsec/defconfig       |  4 ++--
+ linux/net/ipsec/ipsec_ocf.c     | 10 ++++------
+ packaging/linus/config-all.h    |  3 ++-
+ packaging/makefiles/module.defs |  2 +-
+ 5 files changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index cdfb77d..ea9a060 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -434,12 +434,12 @@ HAVE_STATSD?=false
+ 
+ # Do we have Openssl libraries available for BIGNUM support?
+ # Required of HAVE_OCF support
+-HAVE_OPENSSL?=false
++HAVE_OPENSSL?=true
+ 
+ # Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
+ # For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
+ # has support for OCF (inline or module)
+-HAVE_OCF?=false
++HAVE_OCF?=true
+ 
+ ifeq ($(HAVE_OCF),true)
+ HAVE_OPENSSL=true
+diff --git a/linux/net/ipsec/defconfig b/linux/net/ipsec/defconfig
+index 39cda8e..5e123e0 100644
+--- a/linux/net/ipsec/defconfig
++++ b/linux/net/ipsec/defconfig
+@@ -52,8 +52,8 @@ CONFIG_KLIPS_ENC_CRYPTOAPI=y
+ CONFIG_KLIPS_IPCOMP=y
+ 
+ # To enable userspace-switchable KLIPS debugging, say 'y'.
+-CONFIG_KLIPS_DEBUG=y
++CONFIG_KLIPS_DEBUG=n
+ 
+ # OCF HW offloading, requires kernel patch
+-# CONFIG_KLIPS_OCF is not set
++CONFIG_KLIPS_OCF=y
+ 
+diff --git a/linux/net/ipsec/ipsec_ocf.c b/linux/net/ipsec/ipsec_ocf.c
+index a95c792..523acaa 100644
+--- a/linux/net/ipsec/ipsec_ocf.c
++++ b/linux/net/ipsec/ipsec_ocf.c
+@@ -82,12 +82,10 @@ static void ipsec_ocf_skbq_process(unsigned long arg)
+ 	void *this;
+ 	struct sk_buff *skb;
+ 	
+-	if ((skb = skb_dequeue(&ipsec_ocf_skbq)) != NULL) {
++	while ((skb = skb_dequeue(&ipsec_ocf_skbq)) != NULL) {
+ 		func = ((void **) (&skb->cb[0]))[0];
+ 		this = ((void **) (&skb->cb[0]))[1];
+ 		(*func)(this);
+-		/* make sure we run again */
+-		tasklet_schedule(&ipsec_ocf_task);
+ 	}
+ }
+ 
+@@ -101,7 +99,7 @@ static void ipsec_ocf_queue_init(void)
+ 	((void **) (&(this)->skb->cb[0]))[0] = func; \
+ 	((void **) (&(this)->skb->cb[0]))[1] = this; \
+ 	skb_queue_tail(&ipsec_ocf_skbq, (this)->skb); \
+-	tasklet_schedule(&ipsec_ocf_task);
++	tasklet_hi_schedule(&ipsec_ocf_task);
+ 
+ #endif
+ 
+@@ -735,7 +733,7 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
+ 	crp->crp_olen = irs->skb->len; /* Total output length */
+ 	crp->crp_flags =
+ 			CRYPTO_F_SKBUF |
+-			(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
++			(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+ 			(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
+ 			0;
+ 	crp->crp_buf = (caddr_t) irs->skb;
+@@ -1161,7 +1159,7 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
+ 	crp->crp_olen = ixs->skb->len; /* Total output length */
+ 	crp->crp_flags =
+ 			CRYPTO_F_SKBUF |
+-			(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
++			(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+ 			(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
+ 			0;
+ 	crp->crp_buf = (caddr_t) ixs->skb;
+diff --git a/packaging/linus/config-all.h b/packaging/linus/config-all.h
+index 32134a8..38cf91c 100644
+--- a/packaging/linus/config-all.h
++++ b/packaging/linus/config-all.h
+@@ -79,7 +79,8 @@
+ #  define CONFIG_KLIPS_OCF 1
+ # endif
+ #endif
+-#undef CONFIG_KLIPS_OCF
++//#undef CONFIG_KLIPS_OCF
++#define CONFIG_KLIPS_OCF 1
+ 
+ #ifndef CONFIG_KLIPS_ALG_AES_MAC
+ #define CONFIG_KLIPS_ALG_AES_MAC 1
+diff --git a/packaging/makefiles/module.defs b/packaging/makefiles/module.defs
+index 75bbcd9..8731959 100644
+--- a/packaging/makefiles/module.defs
++++ b/packaging/makefiles/module.defs
+@@ -37,7 +37,7 @@ CONFIG_KLIPS_ENC_CRYPTOAPI=n
+ CONFIG_KLIPS_IPCOMP=y
+ 
+ # To enable userspace-switchable KLIPS debugging, say 'y'.
+-CONFIG_KLIPS_DEBUG=y
++CONFIG_KLIPS_DEBUG=n
+ 
+ #
+ #
+-- 
+1.9.1
+
