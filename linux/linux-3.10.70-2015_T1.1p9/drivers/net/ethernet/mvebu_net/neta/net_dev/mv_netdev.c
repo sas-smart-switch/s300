@@ -4375,7 +4375,11 @@ static int mv_eth_neta_cap_verify(unsigned int neta_cap_bm)
 		if (((rev == MV88F68xx_Z1_REV) && (neta_cap_bm == MV_ETH_CAP_BM || neta_cap_bm == 0)) ||
 		    ((rev == MV88F68xx_A0_REV) && (neta_cap_bm == (MV_ETH_CAP_PNC | MV_ETH_CAP_BM) ||
 						neta_cap_bm == MV_ETH_CAP_PNC ||
-						neta_cap_bm == MV_ETH_CAP_BM ||
+						neta_cap_bm == MV_ETH_CAP_BM  ||
+						neta_cap_bm == 0)) ||
+		    ((rev == MV88F68xx_B0_REV) && (neta_cap_bm == (MV_ETH_CAP_PNC | MV_ETH_CAP_BM) ||
+		                neta_cap_bm == MV_ETH_CAP_PNC ||
+		                neta_cap_bm == MV_ETH_CAP_BM  ||
 						neta_cap_bm == 0)))
 			return 0;
 		else

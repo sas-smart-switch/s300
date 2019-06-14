@@ -410,6 +410,9 @@ extern "C" {
 #define MV_88F68XX_Z1_NAME		"Z1"
 #define MV_88F68XX_A0_ID		0x4
 #define MV_88F68XX_A0_NAME		"A0"
+#define MV_88F68XX_B0_ID                0xA
+#define MV_88F68XX_B0_NAME              "B0"
+
 
 /* A39x revisions */
 #define MV_88F69XX_Z1_ID		0x2
@@ -421,6 +424,8 @@ extern "C" {
 	MV_88F69XX_Z1_NAME,\
 	NULL,\
 	MV_88F68XX_A0_NAME,\
+	NULL, \
+	MV_88F68XX_B0_NAME,\
 };
 
 /* Armada 39x Family */
